@@ -307,33 +307,54 @@ This allows the daemon to serve both use cases from a single process.
 
 ## Implementation Phases
 
-### Phase 1: Documentation and Policy Schema
+### Phase 1: Foundation ✅
 
-- Create this design document
-- Update `config/policy.yaml` to new format
-- Update `src/policy.rs` to parse enhanced policy with commands and operations
-- Maintain backward compatibility with existing proxy mode
+Building blocks: design, policy engine, shared types, eBPF LSM programs,
+and namespace delegation library. Each component is independently testable.
 
-### Phase 2: Namespace Delegation
+- [x] Create this design document
+- [x] Define policy schema with commands, prog_types, map_types and per-type operations
+- [x] Implement policy engine (`src/policy.rs`): parsing, bitmap generation, system-policy intersection
+- [x] Create `bpf-rbacd-common` crate with shared `#[repr(C)]` types (`PolicyKey`, `PolicyValue`)
+- [x] Create `bpf-rbacd-ebpf` crate with three LSM hooks (`security_bpf`, `security_bpf_prog_load`, `security_bpf_map_create`)
+- [x] Implement namespace delegation library (`src/namespace.rs`): `setns()` entry, bpffs mounting, delegation, revocation
+- [x] Add protocol module for proxy-mode fallback (`src/protocol.rs`)
+- [x] Maintain backward compatibility with existing proxy mode
 
-- Add `setns()` support (nix crate already provides this)
-- Implement bpffs mounting from within target namespace
-- Add container/namespace discovery (inotify on `/proc` or cgroup events)
-- Implement policy map population logic
+**Note — stubbed in this phase:**
+- The userns ID resolver in `bpf-rbacd-ebpf` returns 0 (needs CO-RE/BTF access to `current->nsproxy->user_ns->ns.inum`)
 
-### Phase 3: eBPF LSM (Aya)
+### Phase 2: Component Testing ✅
 
-- Create `bpf-rbacd-common` crate with shared types
-- Create `bpf-rbacd-ebpf` crate with LSM programs
-- Implement `security_bpf`, `security_bpf_prog_load`, `security_bpf_map_create` hooks
-- Add LSM loading and lifecycle management to daemon
+Verify each building block works in isolation before wiring them together.
 
-### Phase 4: Integration and Testing
+- [x] Unit tests for policy engine (22 tests: role assignment, per-type operations, bitmap generation, admin/net roles, system-policy intersection, YAML loading)
+- [x] Namespace delegation tests (8 tests: userns creation, target namespace resolution, delegation lifecycle, mount data, bpffs detection)
+- [x] LSM smoke tests (4 tests: eBPF binary validation, load+attach, policy map population)
+- [x] CI workflow: workspace lint, eBPF crate build (`bpfel-unknown-none`), non-privileged tests, rustdoc with warnings-as-errors
+- [x] Dependabot coverage for both workspace and `bpf-rbacd-ebpf` crate
 
-- Wire up daemon to LSM loading at startup
-- Add namespace event handling (watch for new containers)
-- Integration testing with podman user namespaces
-- Integration testing with systemd `PrivateBPF=`
+### Phase 3: Daemon Integration (next)
+
+Wire the components into a running system. This is where the daemon
+becomes a functioning eBPF RBAC enforcer.
+
+- [ ] Implement userns ID resolver via CO-RE/BTF (`current->nsproxy->user_ns->ns.inum`) — replace the stub
+- [ ] Load and manage LSM lifecycle at daemon startup
+- [ ] Add container/namespace discovery (inotify on `/proc`, cgroup events, or CRI hooks)
+- [ ] Wire namespace delegation into daemon main loop (on namespace event: delegate, populate map)
+- [ ] Populate eBPF policy map per delegated namespace
+- [ ] Policy hot-reload: update map entries when policy file changes
+
+### Phase 4: End-to-End Validation (future)
+
+Test the complete system in real environments.
+
+- [ ] End-to-end testing with podman user namespaces
+- [ ] End-to-end testing with systemd `PrivateBPF=`
+- [ ] Revocation testing: remove map entry, verify LSM denies subsequent operations
+- [ ] Multi-role testing: multiple namespaces with different policies simultaneously
+- [ ] Performance benchmarking of LSM hook overhead
 
 ---
 
@@ -345,7 +366,7 @@ This allows the daemon to serve both use cases from a single process.
 | Syscall command restriction | Feasible | Via `security_bpf` hook |
 | Attachment point restriction | Partial | Devices feasible via `security_netlink_send`; functions harder |
 | Helper/kfunc restriction | TBD | May require kernel changes; not inspectable from LSM hook easily |
-| Bind-mount of bpffs from host | Does NOT work | Must use nsenter dance; `s_user_ns` set at mount time |
+| Bind-mount of bpffs from host | Does NOT work | Must enter target userns before mounting; `s_user_ns` set at mount time |
 | Init user namespace users | Proxy only | Cannot use BPF tokens in init_user_ns (`EOPNOTSUPP`) |
 
 ### Open Questions
