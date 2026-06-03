@@ -28,24 +28,24 @@ eBPF is a powerful kernel technology, but access typically requires `CAP_BPF` or
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│              bpf-rbacd (privileged daemon)                │
+│              bpf-rbacd (privileged daemon)               │
 │                                                          │
-│  ┌────────────┐  ┌──────────────┐  ┌──────────────────┐ │
-│  │   Policy    │  │  Namespace   │  │  Proxy Handler   │ │
-│  │   Engine    │  │  Delegation  │  │  (SCM_RIGHTS)    │ │
-│  └─────┬──────┘  └──────┬───────┘  └──────┬───────────┘ │
-│        │                │                  │             │
-│        ▼                ▼                  ▼             │
-│  ┌──────────┐    ┌───────────┐    ┌──────────────────┐  │
-│  │ eBPF Map │    │  bpffs +  │    │   Unix Socket    │  │
-│  │ (policy) │    │  tokens   │    │  /run/bpf-rbac   │  │
-│  └────┬─────┘    └───────────┘    └──────────────────┘  │
+│  ┌────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │   Policy   │  │  Namespace   │  │  Proxy Handler   │  │
+│  │   Engine   │  │  Delegation  │  │  (SCM_RIGHTS)    │  │
+│  └─────┬──────┘  └──────┬───────┘  └──────┬───────────┘  │
+│        │                │                 │              │
+│        ▼                ▼                 ▼              │
+│  ┌──────────┐    ┌───────────┐    ┌──────────────────┐   │
+│  │ eBPF Map │    │  bpffs +  │    │   Unix Socket    │   │
+│  │ (policy) │    │  tokens   │    │  /run/bpf-rbac   │   │
+│  └────┬─────┘    └───────────┘    └──────────────────┘   │
 │       │                                                  │
 │       ▼                                                  │
 │  ┌──────────────────────────────────────────────────┐    │
-│  │              eBPF LSM Programs                    │    │
+│  │              eBPF LSM Programs                   │    │
 │  │  security_bpf · security_bpf_prog_load ·         │    │
-│  │  security_bpf_map_create                          │    │
+│  │  security_bpf_map_create                         │    │
 │  └──────────────────────────────────────────────────┘    │
 └──────────────────────────────────────────────────────────┘
          │                              │
