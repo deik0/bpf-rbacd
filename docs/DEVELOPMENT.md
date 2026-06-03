@@ -270,9 +270,9 @@ structs can be used with Aya's typed map APIs in userspace.
 # Main workspace (daemon, policy, tests)
 cargo build
 
-# eBPF programs (needs nightly + BPF target)
+# eBPF programs (needs nightly + rust-src + bpf-linker)
+cargo install bpf-linker
 cd bpf-rbacd-ebpf
-rustup target add bpfel-unknown-none
 cargo +nightly build --target bpfel-unknown-none -Z build-std=core --release
 ```
 
@@ -285,6 +285,83 @@ cargo test
 # Root-required tests (namespace delegation, LSM loading)
 sudo -E cargo test -- --ignored
 ```
+
+---
+
+## CI pipeline
+
+CI runs on every push to `main` and on every pull request. It also runs
+daily at 04:00 UTC to catch breakage from nightly toolchain or dependency
+updates. All jobs must pass before merging.
+
+### Jobs
+
+| Job | Toolchain | What it does |
+|-----|-----------|-------------|
+| **Lint** | stable | `cargo fmt --all --check` and `cargo clippy --all-targets --all-features -D warnings` on the main workspace |
+| **Lint eBPF** | nightly | `cargo fmt --check` on `bpf-rbacd-ebpf/` (separate workspace, needs nightly) |
+| **Build** | stable + beta | `cargo build --all-targets` and `cargo build --release` to catch regressions on both channels |
+| **Build eBPF** | nightly | Installs `bpf-linker`, then builds the eBPF crate for `bpfel-unknown-none` with `-Z build-std=core`. Needs `rust-src` component |
+| **Unit Tests** | stable | `cargo test --lib` (in-module tests) and `cargo test --doc` (doc examples) |
+| **Integration Tests** | stable | `cargo test --test integration` — runs the non-privileged tests from `tests/integration.rs`. Tests that need root or `CAP_BPF` are `#[ignore]` and skipped |
+| **Documentation** | stable | `cargo doc` with `-D warnings` for the workspace and for `bpf-rbacd-common --features user` |
+| **All CI passed** | — | Gate job using `alls-green`. All 7 jobs above must succeed |
+
+### Why two workspaces?
+
+The eBPF crate (`bpf-rbacd-ebpf/`) targets `bpfel-unknown-none` — a bare-metal
+BPF target with no `std`. It can't be in the same Cargo workspace as the daemon
+because normal `cargo build` would try to build it for the host target and fail.
+So it has its own `[workspace]` in its `Cargo.toml`, and the parent workspace
+uses `exclude = ["bpf-rbacd-ebpf"]`.
+
+This means CI has separate lint/build jobs for each workspace.
+
+### Running CI checks locally
+
+```bash
+# Lint (same as CI)
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
+
+# Lint eBPF
+cd bpf-rbacd-ebpf && cargo +nightly fmt -- --check && cd ..
+
+# Build eBPF
+cd bpf-rbacd-ebpf
+cargo +nightly build --target bpfel-unknown-none -Z build-std=core --release
+cd ..
+
+# Tests
+cargo test --lib
+cargo test --doc
+cargo test --test integration
+
+# Docs
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --document-private-items
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps -p bpf-rbacd-common --features user
+```
+
+### Privileged tests
+
+Tests marked `#[ignore]` require root and/or `CAP_BPF`. These don't run in
+GitHub Actions (the default runners don't support BPF LSM). To run them
+locally:
+
+```bash
+sudo -E cargo test -- --ignored
+```
+
+These cover namespace delegation with real `setns()` calls, LSM program loading
+and attaching, and policy map population via Aya.
+
+### Dependabot
+
+Dependabot watches two directories:
+
+- `/` — main workspace Cargo dependencies (weekly)
+- `/bpf-rbacd-ebpf` — eBPF crate dependencies (weekly)
+- GitHub Actions versions (weekly)
 
 ---
 
