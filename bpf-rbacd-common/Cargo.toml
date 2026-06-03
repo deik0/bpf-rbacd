@@ -1,0 +1,15 @@
+[package]
+name = "bpf-rbacd-common"
+version = "0.1.0"
+edition = "2021"
+description = "Shared types between bpf-rbacd userspace daemon and eBPF LSM programs"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[features]
+default = []
+# Enable userspace-only features (not available in eBPF context)
+user = ["aya"]
+
+[dependencies]
+aya = { version = "0.13", optional = true }
