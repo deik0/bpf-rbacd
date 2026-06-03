@@ -1,15 +1,39 @@
-//! Protocol definitions for client-daemon communication
+//! Wire protocol and client library for proxy-mode communication.
+//!
+//! In proxy mode, unprivileged clients connect to the daemon's Unix socket,
+//! send a [`Request`], and receive a [`Response`] — potentially with a
+//! BPF file descriptor passed via `SCM_RIGHTS`.
+//!
+//! The protocol uses [bincode] for serialization, chosen for its compact
+//! binary format and zero-copy deserialization.
+//!
+//! # Wire format
+//!
+//! ```text
+//! Client → Daemon:  bincode-encoded Request
+//! Daemon → Client:  bincode-encoded Response + optional FD via SCM_RIGHTS
+//! ```
+//!
+//! # Authentication
+//!
+//! The daemon authenticates clients using `SO_PEERCRED` — the kernel fills
+//! in the client's UID/GID/PID, which cannot be spoofed from userspace.
+//!
+//! [bincode]: https://docs.rs/bincode
 
 use serde::{Deserialize, Serialize};
 use std::os::unix::io::RawFd;
 
+/// A request from the client to the daemon.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Request {
+    /// Load a BPF program from an ELF object file.
     LoadProgram {
         prog_type: String,
         object_path: String,
         program_name: String,
     },
+    /// Create a BPF map with the specified parameters.
     CreateMap {
         map_type: String,
         name: String,
@@ -17,6 +41,7 @@ pub enum Request {
         value_size: u32,
         max_entries: u32,
     },
+    /// Attach a loaded BPF program to a target.
     Attach {
         attach_type: String,
         prog_fd: RawFd,
@@ -24,13 +49,30 @@ pub enum Request {
     },
 }
 
+/// A response from the daemon to the client.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Response {
+    /// The operation succeeded. If the operation produces a file descriptor
+    /// (e.g. map creation, program loading), it is sent via `SCM_RIGHTS`
+    /// and the `fd` field contains the daemon-side FD number for logging.
     Success { fd: Option<RawFd> },
+    /// The operation was denied by policy.
     Denied { reason: String },
+    /// An internal error occurred.
     Error { message: String },
 }
 
+/// Client library for connecting to the bpf-rbacd proxy.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use bpf_rbacd::protocol::client::BpfRbacClient;
+///
+/// let mut client = BpfRbacClient::connect().unwrap();
+/// let fd = client.create_map("hash", "my_map", 4, 8, 1024).unwrap();
+/// println!("Got map fd: {}", fd);
+/// ```
 pub mod client {
     use super::*;
     use anyhow::Result;
@@ -41,16 +83,27 @@ pub mod client {
 
     const SOCKET_PATH: &str = "/run/bpf-rbac.sock";
 
+    /// A client connection to the bpf-rbacd daemon.
     pub struct BpfRbacClient {
         stream: UnixStream,
     }
 
     impl BpfRbacClient {
+        /// Connect to the daemon's Unix socket at `/run/bpf-rbac.sock`.
+        ///
+        /// # Errors
+        ///
+        /// Returns an error if the socket does not exist or the connection
+        /// is refused (daemon not running).
         pub fn connect() -> Result<Self> {
             let stream = UnixStream::connect(SOCKET_PATH)?;
             Ok(Self { stream })
         }
 
+        /// Request the daemon to create a BPF map and return its file descriptor.
+        ///
+        /// The returned `RawFd` is valid in the calling process and can be used
+        /// with standard BPF operations.
         pub fn create_map(
             &mut self,
             map_type: &str,
