@@ -87,6 +87,9 @@ jobs:
         with:
           components: rust-src
 
+      - name: Install bpf-linker
+        run: cargo install bpf-linker
+
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: bpf-rbacd-ebpf

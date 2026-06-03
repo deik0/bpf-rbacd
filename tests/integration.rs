@@ -775,7 +775,7 @@ mod lsm_tests {
         };
 
         policy_map
-            .insert(&key, &value, 0)
+            .insert(key, value, 0)
             .expect("Failed to insert policy entry");
 
         let retrieved = policy_map.get(&key, 0).expect("Failed to get policy entry");
@@ -795,7 +795,7 @@ mod lsm_tests {
             _reserved: [0; 3],
         };
         policy_map
-            .insert(&deny_key, &deny_value, 0)
+            .insert(deny_key, deny_value, 0)
             .expect("Failed to insert deny policy");
 
         let retrieved = policy_map
