@@ -59,7 +59,7 @@ Because we cannot require application changes, we need a **capability-granting**
 ┌─────────────────────────────────────────────────────────────────┐
 │                 Privileged Daemon (bpf-rbacd)                   │
 │  - Reads policy configuration                                   │
-│  - Performs privilege delegation via nsenter + bpffs mount       │
+│  - Performs privilege delegation via nsenter + bpffs mount      │
 │  - Populates eBPF map with policy information                   │
 │  - Loads and manages the LSM program                            │
 └─────────────────────────────┬───────────────────────────────────┘
@@ -75,7 +75,7 @@ Because we cannot require application changes, we need a **capability-granting**
 ┌─────────────────────────────────────────────────────────────────┐
 │              Linux Security Module (LSM in eBPF)                │
 │  - Enforces granular permissions per user namespace             │
-│  - Hooks: security_bpf, security_bpf_prog_load,                │
+│  - Hooks: security_bpf, security_bpf_prog_load,                 │
 │           security_bpf_map_create                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
