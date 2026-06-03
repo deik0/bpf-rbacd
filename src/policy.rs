@@ -518,17 +518,52 @@ impl Default for Policy {
         let mut roles = HashMap::new();
 
         let mut ebpf_progs = HashMap::new();
-        ebpf_progs.insert("kprobe".to_string(), vec!["load".to_string(), "attach".to_string()]);
-        ebpf_progs.insert("uprobe".to_string(), vec!["load".to_string(), "attach".to_string()]);
-        ebpf_progs.insert("tracepoint".to_string(), vec!["load".to_string(), "attach".to_string()]);
-        ebpf_progs.insert("perf_event".to_string(), vec!["load".to_string(), "attach".to_string()]);
-        ebpf_progs.insert("raw_tracepoint".to_string(), vec!["load".to_string(), "attach".to_string()]);
+        ebpf_progs.insert(
+            "kprobe".to_string(),
+            vec!["load".to_string(), "attach".to_string()],
+        );
+        ebpf_progs.insert(
+            "uprobe".to_string(),
+            vec!["load".to_string(), "attach".to_string()],
+        );
+        ebpf_progs.insert(
+            "tracepoint".to_string(),
+            vec!["load".to_string(), "attach".to_string()],
+        );
+        ebpf_progs.insert(
+            "perf_event".to_string(),
+            vec!["load".to_string(), "attach".to_string()],
+        );
+        ebpf_progs.insert(
+            "raw_tracepoint".to_string(),
+            vec!["load".to_string(), "attach".to_string()],
+        );
 
         let mut ebpf_maps = HashMap::new();
-        ebpf_maps.insert("hash".to_string(), vec!["create".to_string(), "read".to_string(), "write".to_string()]);
-        ebpf_maps.insert("array".to_string(), vec!["create".to_string(), "read".to_string(), "write".to_string()]);
-        ebpf_maps.insert("perf_event_array".to_string(), vec!["create".to_string(), "read".to_string()]);
-        ebpf_maps.insert("ringbuf".to_string(), vec!["create".to_string(), "read".to_string()]);
+        ebpf_maps.insert(
+            "hash".to_string(),
+            vec![
+                "create".to_string(),
+                "read".to_string(),
+                "write".to_string(),
+            ],
+        );
+        ebpf_maps.insert(
+            "array".to_string(),
+            vec![
+                "create".to_string(),
+                "read".to_string(),
+                "write".to_string(),
+            ],
+        );
+        ebpf_maps.insert(
+            "perf_event_array".to_string(),
+            vec!["create".to_string(), "read".to_string()],
+        );
+        ebpf_maps.insert(
+            "ringbuf".to_string(),
+            vec!["create".to_string(), "read".to_string()],
+        );
 
         roles.insert(
             "ebpf".to_string(),
@@ -549,15 +584,60 @@ impl Default for Policy {
         );
 
         let mut net_progs = HashMap::new();
-        net_progs.insert("xdp".to_string(), vec!["load".to_string(), "attach".to_string(), "detach".to_string()]);
-        net_progs.insert("sched_cls".to_string(), vec!["load".to_string(), "attach".to_string(), "detach".to_string()]);
-        net_progs.insert("socket_filter".to_string(), vec!["load".to_string(), "attach".to_string()]);
+        net_progs.insert(
+            "xdp".to_string(),
+            vec![
+                "load".to_string(),
+                "attach".to_string(),
+                "detach".to_string(),
+            ],
+        );
+        net_progs.insert(
+            "sched_cls".to_string(),
+            vec![
+                "load".to_string(),
+                "attach".to_string(),
+                "detach".to_string(),
+            ],
+        );
+        net_progs.insert(
+            "socket_filter".to_string(),
+            vec!["load".to_string(), "attach".to_string()],
+        );
 
         let mut net_maps = HashMap::new();
-        net_maps.insert("hash".to_string(), vec!["create".to_string(), "read".to_string(), "write".to_string()]);
-        net_maps.insert("array".to_string(), vec!["create".to_string(), "read".to_string(), "write".to_string()]);
-        net_maps.insert("devmap".to_string(), vec!["create".to_string(), "read".to_string(), "write".to_string()]);
-        net_maps.insert("lru_hash".to_string(), vec!["create".to_string(), "read".to_string(), "write".to_string()]);
+        net_maps.insert(
+            "hash".to_string(),
+            vec![
+                "create".to_string(),
+                "read".to_string(),
+                "write".to_string(),
+            ],
+        );
+        net_maps.insert(
+            "array".to_string(),
+            vec![
+                "create".to_string(),
+                "read".to_string(),
+                "write".to_string(),
+            ],
+        );
+        net_maps.insert(
+            "devmap".to_string(),
+            vec![
+                "create".to_string(),
+                "read".to_string(),
+                "write".to_string(),
+            ],
+        );
+        net_maps.insert(
+            "lru_hash".to_string(),
+            vec![
+                "create".to_string(),
+                "read".to_string(),
+                "write".to_string(),
+            ],
+        );
 
         roles.insert(
             "ebpf-net".to_string(),

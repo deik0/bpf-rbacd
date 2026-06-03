@@ -346,7 +346,10 @@ roles:
     #[test]
     fn test_policy_yaml_loading() {
         let policy = Policy::load("config/policy.yaml");
-        assert!(policy.is_ok(), "Should parse config/policy.yaml successfully");
+        assert!(
+            policy.is_ok(),
+            "Should parse config/policy.yaml successfully"
+        );
         let policy = policy.unwrap();
         assert!(policy.roles().contains_key("ebpf"));
         assert!(policy.roles().contains_key("ebpf-net"));
@@ -361,8 +364,8 @@ mod namespace_tests {
     use std::process::{Command, Stdio};
 
     use bpf_rbacd::namespace::{
-        DelegationOpts, TargetNamespace, delegate_bpf_to_namespace, is_bpffs_mounted,
-        revoke_bpf_delegation,
+        delegate_bpf_to_namespace, is_bpffs_mounted, revoke_bpf_delegation, DelegationOpts,
+        TargetNamespace,
     };
 
     #[test]
@@ -414,8 +417,8 @@ mod namespace_tests {
         let child_pid = child.id();
         std::thread::sleep(std::time::Duration::from_millis(500));
 
-        let target = TargetNamespace::from_pid(child_pid)
-            .expect("Failed to resolve target namespace");
+        let target =
+            TargetNamespace::from_pid(child_pid).expect("Failed to resolve target namespace");
 
         assert!(target.userns_id > 0, "Should have valid userns_id");
 
@@ -490,8 +493,8 @@ mod namespace_tests {
         let child_pid = child.id();
         std::thread::sleep(std::time::Duration::from_millis(500));
 
-        let target = TargetNamespace::from_pid(child_pid)
-            .expect("Failed to resolve target namespace");
+        let target =
+            TargetNamespace::from_pid(child_pid).expect("Failed to resolve target namespace");
 
         let opts = DelegationOpts::allow_all();
 
@@ -533,8 +536,8 @@ mod namespace_tests {
         let child_pid = child.id();
         std::thread::sleep(std::time::Duration::from_millis(500));
 
-        let target = TargetNamespace::from_pid(child_pid)
-            .expect("Failed to resolve target namespace");
+        let target =
+            TargetNamespace::from_pid(child_pid).expect("Failed to resolve target namespace");
 
         let opts = DelegationOpts::allow_all();
 
@@ -587,9 +590,18 @@ mod namespace_tests {
 
         let opts = DelegationOpts::from_bitmaps(cmd_bitmap, prog_bitmap, map_bitmap, 0);
 
-        assert!(opts.delegate_cmds != 0, "Commands bitmap should be non-zero");
-        assert!(opts.delegate_progs != 0, "Prog types bitmap should be non-zero");
-        assert!(opts.delegate_maps != 0, "Map types bitmap should be non-zero");
+        assert!(
+            opts.delegate_cmds != 0,
+            "Commands bitmap should be non-zero"
+        );
+        assert!(
+            opts.delegate_progs != 0,
+            "Prog types bitmap should be non-zero"
+        );
+        assert!(
+            opts.delegate_maps != 0,
+            "Map types bitmap should be non-zero"
+        );
 
         let data = opts.to_mount_data();
         assert!(data.contains("delegate_cmds="));
@@ -650,10 +662,8 @@ mod lsm_tests {
         let data = std::fs::read(path).unwrap();
         let mut ebpf = aya::Ebpf::load(&data).expect("Failed to load eBPF programs");
 
-        let program_names: Vec<String> = ebpf
-            .programs()
-            .map(|(name, _)| name.to_string())
-            .collect();
+        let program_names: Vec<String> =
+            ebpf.programs().map(|(name, _)| name.to_string()).collect();
 
         assert!(
             program_names.iter().any(|n| n.contains("bpf_rbac_bpf")),
@@ -661,12 +671,16 @@ mod lsm_tests {
             program_names
         );
         assert!(
-            program_names.iter().any(|n| n.contains("bpf_rbac_prog_load")),
+            program_names
+                .iter()
+                .any(|n| n.contains("bpf_rbac_prog_load")),
             "Should contain bpf_rbac_prog_load program, got: {:?}",
             program_names
         );
         assert!(
-            program_names.iter().any(|n| n.contains("bpf_rbac_map_create")),
+            program_names
+                .iter()
+                .any(|n| n.contains("bpf_rbac_map_create")),
             "Should contain bpf_rbac_map_create program, got: {:?}",
             program_names
         );
@@ -683,8 +697,12 @@ mod lsm_tests {
             .try_into()
             .expect("Not an LSM program");
 
-        program.load("bpf", &btf).expect("Failed to load bpf_rbac_bpf into kernel");
-        program.attach().expect("Failed to attach bpf_rbac_bpf to LSM hook");
+        program
+            .load("bpf", &btf)
+            .expect("Failed to load bpf_rbac_bpf into kernel");
+        program
+            .attach()
+            .expect("Failed to attach bpf_rbac_bpf to LSM hook");
         println!("bpf_rbac_bpf: loaded and attached to LSM hook");
 
         let program: &mut Lsm = ebpf
@@ -693,8 +711,12 @@ mod lsm_tests {
             .try_into()
             .expect("Not an LSM program");
 
-        program.load("bpf_prog_load", &btf).expect("Failed to load bpf_rbac_prog_load");
-        program.attach().expect("Failed to attach bpf_rbac_prog_load");
+        program
+            .load("bpf_prog_load", &btf)
+            .expect("Failed to load bpf_rbac_prog_load");
+        program
+            .attach()
+            .expect("Failed to attach bpf_rbac_prog_load");
         println!("bpf_rbac_prog_load: loaded and attached to LSM hook");
 
         let program: &mut Lsm = ebpf
@@ -703,13 +725,20 @@ mod lsm_tests {
             .try_into()
             .expect("Not an LSM program");
 
-        program.load("bpf_map_create", &btf).expect("Failed to load bpf_rbac_map_create");
-        program.attach().expect("Failed to attach bpf_rbac_map_create");
+        program
+            .load("bpf_map_create", &btf)
+            .expect("Failed to load bpf_rbac_map_create");
+        program
+            .attach()
+            .expect("Failed to attach bpf_rbac_map_create");
         println!("bpf_rbac_map_create: loaded and attached to LSM hook");
 
         // Verify the POLICY_MAP is accessible
         let map = ebpf.map("POLICY_MAP");
-        assert!(map.is_some(), "POLICY_MAP should be accessible after loading");
+        assert!(
+            map.is_some(),
+            "POLICY_MAP should be accessible after loading"
+        );
         println!("POLICY_MAP: accessible");
 
         println!("All LSM programs loaded, attached, and map verified.");
@@ -728,11 +757,9 @@ mod lsm_tests {
         let mut ebpf = aya::Ebpf::load(&data).expect("Failed to load eBPF programs");
 
         use aya::maps::HashMap;
-        use bpf_rbacd_common::{PolicyKey, PolicyValue, flags};
+        use bpf_rbacd_common::{flags, PolicyKey, PolicyValue};
 
-        let map = ebpf
-            .map_mut("POLICY_MAP")
-            .expect("POLICY_MAP not found");
+        let map = ebpf.map_mut("POLICY_MAP").expect("POLICY_MAP not found");
 
         let mut policy_map: HashMap<&mut aya::maps::MapData, PolicyKey, PolicyValue> =
             HashMap::try_from(map).expect("Not a HashMap");
@@ -747,7 +774,9 @@ mod lsm_tests {
             _reserved: [0; 3],
         };
 
-        policy_map.insert(&key, &value, 0).expect("Failed to insert policy entry");
+        policy_map
+            .insert(&key, &value, 0)
+            .expect("Failed to insert policy entry");
 
         let retrieved = policy_map.get(&key, 0).expect("Failed to get policy entry");
         assert_eq!(retrieved.allowed_cmds, 0x1F);
@@ -765,14 +794,25 @@ mod lsm_tests {
             flags: flags::POLICY_FLAG_DENY_ALL,
             _reserved: [0; 3],
         };
-        policy_map.insert(&deny_key, &deny_value, 0).expect("Failed to insert deny policy");
+        policy_map
+            .insert(&deny_key, &deny_value, 0)
+            .expect("Failed to insert deny policy");
 
-        let retrieved = policy_map.get(&deny_key, 0).expect("Failed to get deny entry");
-        assert_eq!(retrieved.flags & flags::POLICY_FLAG_DENY_ALL, flags::POLICY_FLAG_DENY_ALL);
+        let retrieved = policy_map
+            .get(&deny_key, 0)
+            .expect("Failed to get deny entry");
+        assert_eq!(
+            retrieved.flags & flags::POLICY_FLAG_DENY_ALL,
+            flags::POLICY_FLAG_DENY_ALL
+        );
         println!("Deny-all policy entry works correctly");
 
-        policy_map.remove(&key).expect("Failed to remove policy entry");
-        policy_map.remove(&deny_key).expect("Failed to remove deny entry");
+        policy_map
+            .remove(&key)
+            .expect("Failed to remove policy entry");
+        policy_map
+            .remove(&deny_key)
+            .expect("Failed to remove deny entry");
         println!("Policy map cleanup successful");
     }
 }

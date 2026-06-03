@@ -84,9 +84,8 @@ jobs:
       - uses: actions/checkout@v6
 
       - uses: dtolnay/rust-toolchain@nightly
-
-      - name: Add BPF target
-        run: rustup target add bpfel-unknown-none
+        with:
+          components: rust-src
 
       - uses: Swatinem/rust-cache@v2
         with:
