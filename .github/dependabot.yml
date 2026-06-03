@@ -12,6 +12,15 @@ updates:
         patterns:
           - "*"
 
+  - package-ecosystem: "cargo"
+    directory: "/bpf-rbacd-ebpf"
+    schedule:
+      interval: "weekly"
+    groups:
+      cargo-ebpf-crates:
+        patterns:
+          - "*"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
