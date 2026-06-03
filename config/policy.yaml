@@ -1,72 +1,142 @@
 # BPF RBAC Policy Configuration
 # /etc/bpf-rbac/policy.yaml
 
+# System-wide policy: defines the maximum allowed operations on the system.
+# Role-specific policies cannot exceed this. Effective policy for a given
+# entity is the intersection of system_policy and the role's policy.
+system_policy:
+  commands:
+    - PROG_LOAD
+    - MAP_CREATE
+    - MAP_LOOKUP_ELEM
+    - MAP_UPDATE_ELEM
+    - MAP_DELETE_ELEM
+    - MAP_GET_NEXT_KEY
+    - LINK_CREATE
+    - OBJ_PIN
+    - OBJ_GET
+    - OBJ_GET_INFO_BY_FD
+    - BTF_LOAD
+    - PROG_ATTACH
+    - PROG_DETACH
+  prog_types:
+    kprobe: [load, attach, detach]
+    kretprobe: [load, attach, detach]
+    uprobe: [load, attach, detach]
+    uretprobe: [load, attach, detach]
+    tracepoint: [load, attach, detach]
+    raw_tracepoint: [load, attach, detach]
+    perf_event: [load, attach, detach]
+    fentry: [load, attach, detach]
+    fexit: [load, attach, detach]
+    xdp: [load, attach, detach]
+    sched_cls: [load, attach, detach]
+    sched_act: [load, attach, detach]
+    socket_filter: [load, attach, detach]
+    sk_skb: [load, attach]
+    sk_msg: [load, attach]
+    sock_ops: [load, attach]
+  map_types:
+    hash: [create, read, write]
+    percpu_hash: [create, read, write]
+    array: [create, read, write]
+    percpu_array: [create, read, write]
+    perf_event_array: [create, read]
+    ringbuf: [create, read]
+    stack_trace: [create, read]
+    lru_hash: [create, read, write]
+    lru_percpu_hash: [create, read, write]
+    devmap: [create, read, write]
+    devmap_hash: [create, read, write]
+    cpumap: [create, read, write]
+    xskmap: [create, read, write]
+    sockmap: [create, read, write]
+    sockhash: [create, read, write]
+
 roles:
   # Tracing role - for observability workloads
   ebpf:
     description: "Tracing and observability programs"
     groups:
       - ebpf
+    commands:
+      - PROG_LOAD
+      - MAP_CREATE
+      - MAP_LOOKUP_ELEM
+      - MAP_UPDATE_ELEM
+      - MAP_DELETE_ELEM
+      - MAP_GET_NEXT_KEY
+      - LINK_CREATE
+      - OBJ_PIN
+      - OBJ_GET
+      - OBJ_GET_INFO_BY_FD
+      - BTF_LOAD
     prog_types:
-      - kprobe
-      - kretprobe
-      - uprobe
-      - uretprobe
-      - tracepoint
-      - raw_tracepoint
-      - perf_event
-      - fentry
-      - fexit
+      kprobe: [load, attach]
+      kretprobe: [load, attach]
+      uprobe: [load, attach]
+      uretprobe: [load, attach]
+      tracepoint: [load, attach]
+      raw_tracepoint: [load, attach]
+      perf_event: [load, attach]
+      fentry: [load, attach]
+      fexit: [load, attach]
     map_types:
-      - hash
-      - percpu_hash
-      - array
-      - percpu_array
-      - perf_event_array
-      - ringbuf
-      - stack_trace
-    attach_types: []  # Empty means allow all for allowed prog_types
+      hash: [create, read, write]
+      percpu_hash: [create, read, write]
+      array: [create, read, write]
+      percpu_array: [create, read, write]
+      perf_event_array: [create, read]
+      ringbuf: [create, read]
+      stack_trace: [create, read]
 
   # Networking role - for XDP, TC, socket programs
   ebpf-net:
     description: "Networking programs"
     groups:
       - ebpf-net
+    commands:
+      - PROG_LOAD
+      - MAP_CREATE
+      - MAP_LOOKUP_ELEM
+      - MAP_UPDATE_ELEM
+      - MAP_DELETE_ELEM
+      - MAP_GET_NEXT_KEY
+      - LINK_CREATE
+      - OBJ_PIN
+      - OBJ_GET
+      - OBJ_GET_INFO_BY_FD
+      - BTF_LOAD
+      - PROG_ATTACH
+      - PROG_DETACH
     prog_types:
-      - xdp
-      - sched_cls
-      - sched_act
-      - socket_filter
-      - sk_skb
-      - sk_msg
-      - sock_ops
-      - lwt_in
-      - lwt_out
-      - lwt_xmit
+      xdp: [load, attach, detach]
+      sched_cls: [load, attach, detach]
+      sched_act: [load, attach, detach]
+      socket_filter: [load, attach]
+      sk_skb: [load, attach]
+      sk_msg: [load, attach]
+      sock_ops: [load, attach]
     map_types:
-      - hash
-      - percpu_hash
-      - array
-      - percpu_array
-      - lru_hash
-      - lru_percpu_hash
-      - devmap
-      - devmap_hash
-      - cpumap
-      - xskmap
-      - sockmap
-      - sockhash
-    attach_types: []
+      hash: [create, read, write]
+      percpu_hash: [create, read, write]
+      array: [create, read, write]
+      percpu_array: [create, read, write]
+      lru_hash: [create, read, write]
+      lru_percpu_hash: [create, read, write]
+      devmap: [create, read, write]
+      devmap_hash: [create, read, write]
+      cpumap: [create, read, write]
+      xskmap: [create, read, write]
+      sockmap: [create, read, write]
+      sockhash: [create, read, write]
 
   # Admin role - unrestricted access
   ebpf-admin:
     description: "Full BPF access for administrators"
     groups:
       - ebpf-admin
-      - wheel  # Also allow wheel group
-    prog_types:
-      - any
-    map_types:
-      - any
-    attach_types:
-      - any
+      - wheel
+    commands: [any]
+    prog_types: {any: [any]}
+    map_types: {any: [any]}

@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
     });
     let policy = Arc::new(policy);
 
-    info!("Loaded policy with {} roles", policy.roles.len());
+    info!("Loaded policy with {} roles", policy.roles().len());
 
     // Remove old socket
     let _ = std::fs::remove_file(SOCKET_PATH);
